@@ -50,3 +50,11 @@
 50 595.0 360.0
 51 1340.0 725.0
 52 1740.0 245.0
+
+def update_pheromone_delta(self):
+        pheromone_delta = 1 / self.path_len
+        delta = [[0 for j in range(self.graph.num_nodes)] for i in range(self.graph.num_nodes)]
+        for i in range(len(self.tabu) - 1):
+            delta[self.tabu[i]][self.tabu[i+1]] = pheromone_delta
+            delta[self.tabu[i+1]][self.tabu[i]] = pheromone_delta
+        return delta

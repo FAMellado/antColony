@@ -1,7 +1,6 @@
 import random
 import math
 import numpy as np     
-import pandas as pd #para dataframes
 import sys 
 import time
 import matplotlib.pyplot as plt
@@ -17,10 +16,8 @@ class Graph:
 class Ant:
     def __init__(self, graph, alpha, beta):
         self.graph = graph
-        self.alpha = alpha
-        alpha = 0.1                                                     #Factor de evaporación
-        self.beta = beta
-        beta = 2.5                                                      #Coeficiente heurístico
+        self.alpha = alpha                                              #Factor de evaporación
+        self.beta = beta                                                #Coeficiente heurístico
         self.tabu = []                                                  #Visitados
         self.current_node = random.randint(0, graph.num_nodes - 1)      #Pos inicial hormigas
         self.tabu.append(self.current_node)                             #Marcamos visitados
@@ -51,17 +48,18 @@ class Ant:
         self.graph.pheromone[i][j] = (1 - rho) * self.graph.pheromone[i][j] + rho * self.graph.initial_pheromone
         self.graph.pheromone[j][i] = self.graph.pheromone[i][j]             # Assuming an undirected graph
 
-    def update_pheromone_delta(self):
-        pheromone_delta = 1 / self.path_len
-        delta = [[0 for j in range(self.graph.num_nodes)] for i in range(self.graph.num_nodes)]
-        for i in range(len(self.tabu) - 1):
-            delta[self.tabu[i]][self.tabu[i+1]] = pheromone_delta
-            delta[self.tabu[i+1]][self.tabu[i]] = pheromone_delta
-        return delta
 
-def ant_colony(graph, num_ants, num_iterations, decay, alpha, beta):
+def global_update_pheromone(graph, best_path, best_distance, decay):
+    pheromone_added = 1.0 / best_distance
+    for i in range(len(best_path) - 1):
+        graph.pheromone[best_path[i]][best_path[i + 1]] = (1 - decay) * graph.pheromone[best_path[i]][best_path[i + 1]] + decay * pheromone_added
+        graph.pheromone[best_path[i + 1]][best_path[i]] = graph.pheromone[best_path[i]][best_path[i + 1]]
+    
+
+def ant_colony(graph, num_ants, num_iterations, alpha, beta, decay):
     best_path = None
     best_distance = float('inf')
+    print(best_distance)
     for iteration in range(num_iterations):
         ants = [Ant(graph, alpha, beta) for __ in range(num_ants)]
         for ant in ants:
@@ -73,14 +71,6 @@ def ant_colony(graph, num_ants, num_iterations, decay, alpha, beta):
                 best_distance = ant.path_len
         global_update_pheromone(graph, best_path, best_distance, decay)
     return best_path, best_distance
-
-def global_update_pheromone(graph, best_path, best_distance, decay):
-    pheromone_added = 1.0 / best_distance
-    for i in range(len(best_path) - 1):
-        graph.pheromone[best_path[i]][best_path[i + 1]] = (1 - decay) * graph.pheromone[best_path[i]][best_path[i + 1]] + decay * pheromone_added
-        graph.pheromone[best_path[i + 1]][best_path[i]] = graph.pheromone[best_path[i]][best_path[i + 1]]
-
-
 
 
 
@@ -124,14 +114,16 @@ def main():
     filename = "berlin.txt"
     coords = read_coordinates(filename)
     matrix = create_adjacency_matrix(coords)
-    i=0
-    for row in matrix:
-        print(row)
-        print(i)
-        i += 1
-        print("\n")
-    
+
+    graph = Graph(matrix)
+
     #ant_colony(archivoEntrada, seed, num_ants, num_iterations, alpha(decay), beta(heuristic), limit_prob)
+    #100-500 iteraciones
+    #10-100 hormigas
+    #alfa = 0.1
+    #beta = 2.5 (valor entre 2 y 5)
+    #probabilidad = 0.9
+    best_path_f, best_distancef = ant_colony(graph, 10, 100, 0.1, 2.5, 0.1)
 
 if __name__ == '__main__':  # This ensures that main() is called when the script is run directly
     main()
